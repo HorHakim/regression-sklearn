@@ -3,7 +3,7 @@ import pandas
 import matplotlib.pyplot as plt
 import math
 from sklearn.linear_model import LinearRegression
-
+from statsmodels.graphics.tsaplots import plot_acf
 
 dataset_df = pandas.read_csv("vente_maillots_de_bain.csv")
 dataset_df["Years"] = pandas.to_datetime(dataset_df["Years"])
@@ -59,14 +59,19 @@ def test_model(model, x_test, y_test, df_mean, df_std):
 	plt.show()
 
 
+def show_correlogram(df, y_column):
+	y_values = df[y_column].values	
+	y_stationarized = y_values[1:]- y_values[:-1]
+	plot_acf(y_stationarized)
+	plt.show()
 
-		
 
 
 # show_dataset(dataset_df, "Years", "Sales")
 
-x_train, y_train, x_test, y_test, df_mean, df_std = prepare_data(df=dataset_df, y_column="Sales")
+# x_train, y_train, x_test, y_test, df_mean, df_std = prepare_data(df=dataset_df, y_column="Sales")
 
-model = genrate_fitted_model(x_train, y_train)
+# model = genrate_fitted_model(x_train, y_train)
 
-test_model(model, x_test, y_test, df_mean, df_std)
+# test_model(model, x_test, y_test, df_mean, df_std)
+show_correlogram(dataset_df, "Sales")
