@@ -14,7 +14,7 @@ def show_dataset(df, x_column, y_column):
 	plt.plot(df[x_column], df[y_column], "b-")
 	plt.show()
 
-def prepare_data(df, y_column):
+def prepare_data_regression(df, y_column):
 	df["time_index"] = numpy.arange(1, len(df)+1, 1)
 	split_index = int(len(df)*0.7)
 	df_mean, df_std = df["Sales"].mean(), df["Sales"].std()
@@ -34,6 +34,34 @@ def prepare_data(df, y_column):
 
 
 
+
+def prepare_data_additif(df, y_column):
+	df["Years"] = pandas.to_datetime(df["Years"])
+	df["time_index"] = numpy.arange(1, len(df)+1, 1)
+
+	df["Month"] = df["Years"].dt.month_name()
+	df = pandas.get_dummies(df, columns=["Month"], prefix="", prefix_sep="", dtype=int)
+
+	split_index = int(len(df)*0.7)
+	df_mean, df_std = df["Sales"].mean(), df["Sales"].std()
+
+	df["Sales"] = (df["Sales"] - df_mean) / df_std
+
+	train_df = df.iloc[ : split_index]
+	test_df = df.iloc[split_index : ]
+
+	x_train = train_df[["time_index"] + list(df["Years"].dt.month_name().unique())]
+	y_train = train_df[[y_column]]
+
+	x_test = test_df[["time_index"] + list(df["Years"].dt.month_name().unique())]
+	y_test = test_df[[y_column]]
+
+	return x_train, y_train, x_test, y_test, df_mean, df_std
+
+
+
+
+
 def genrate_fitted_model(x_train, y_train):
 	model = LinearRegression()
 	model.fit(x_train, y_train)
@@ -42,7 +70,7 @@ def genrate_fitted_model(x_train, y_train):
 
 
 def test_model(model, x_test, y_test, df_mean, df_std):
-	y_test_predicted = model.predict(x_test).squeeze()
+	y_test_predicted = model.predict(x_test).squeeze()  # return a * x + b
 	y_test = y_test["Sales"].values
 	rmse = math.sqrt(sum((y_test- y_test_predicted)**2/len(x_test))) # donnée normalisée
 	print(rmse)
@@ -53,8 +81,8 @@ def test_model(model, x_test, y_test, df_mean, df_std):
 
 	plt.figure(figsize=(15, 6))
 	
-	plt.plot(x_test, y_test, "b-") # donnée originale
-	plt.plot(x_test, y_test_predicted, "r-")
+	plt.plot(x_test["time_index"], y_test, "b-") # donnée originale
+	plt.plot(x_test["time_index"], y_test_predicted, "r-")
 	
 	plt.show()
 
@@ -74,4 +102,9 @@ def show_correlogram(df, y_column):
 # model = genrate_fitted_model(x_train, y_train)
 
 # test_model(model, x_test, y_test, df_mean, df_std)
-show_correlogram(dataset_df, "Sales")
+# show_correlogram(dataset_df, "Sales")
+
+
+x_train, y_train, x_test, y_test, df_mean, df_std = prepare_data_additif(df=dataset_df, y_column="Sales")
+model = genrate_fitted_model(x_train, y_train)
+test_model(model, x_test, y_test, df_mean, df_std)
